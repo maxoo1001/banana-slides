@@ -124,13 +124,6 @@ class AIService:
         """
         outline_prompt = get_outline_generation_prompt(idea_prompt, reference_files_content)
         
-        # 临时打印完整 prompt（用于调试）
-        logger.debug("=" * 80)
-        logger.debug("FULL PROMPT FOR OUTLINE GENERATION:")
-        logger.debug("=" * 80)
-        logger.debug(outline_prompt)
-        logger.debug("=" * 80)
-        
         response = self.client.models.generate_content(
             model=self.text_model,
             contents=outline_prompt,
@@ -298,7 +291,6 @@ class AIService:
             Exception with detailed error message if generation fails
         """
         try:
-            logger.debug(f"Generating image with prompt (first 100 chars): {prompt[:1000]}...")
             logger.debug(f"Reference image: {ref_image_path}")
             if additional_ref_images:
                 logger.debug(f"Additional reference images: {len(additional_ref_images)}")

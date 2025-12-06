@@ -1,8 +1,11 @@
 """
 AI Service Prompts - 集中管理所有 AI 服务的 prompt 模板
 """
+import logging
 from textwrap import dedent
 from typing import List, Dict, Optional
+
+logger = logging.getLogger(__name__)
 
 
 def _format_reference_files_xml(reference_files_content: Optional[List[Dict[str, str]]]) -> str:
@@ -46,8 +49,8 @@ def get_outline_generation_prompt(idea_prompt: str, reference_files_content: Opt
     """
     files_xml = _format_reference_files_xml(reference_files_content)
     
-    return dedent(f"""\
-    {files_xml}You are a helpful assistant that generates an outline for a ppt.
+    prompt = dedent(f"""\
+    You are a helpful assistant that generates an outline for a ppt.
     
     You can organize the content in two ways:
     
@@ -77,6 +80,10 @@ def get_outline_generation_prompt(idea_prompt: str, reference_files_content: Opt
     The user's request: {idea_prompt}. Now generate the outline, don't include any other text.
     使用全中文输出。
     """)
+    
+    final_prompt = files_xml + prompt
+    logger.debug(f"[get_outline_generation_prompt] Final prompt:\n{final_prompt}")
+    return final_prompt
 
 
 def get_outline_parsing_prompt(outline_text: str, reference_files_content: Optional[List[Dict[str, str]]] = None) -> str:
@@ -92,8 +99,8 @@ def get_outline_parsing_prompt(outline_text: str, reference_files_content: Optio
     """
     files_xml = _format_reference_files_xml(reference_files_content)
     
-    return dedent(f"""\
-    {files_xml}You are a helpful assistant that parses a user-provided PPT outline text into a structured format.
+    prompt = dedent(f"""\
+    You are a helpful assistant that parses a user-provided PPT outline text into a structured format.
     
     The user has provided the following outline text:
     
@@ -137,6 +144,10 @@ def get_outline_parsing_prompt(outline_text: str, reference_files_content: Optio
     Now parse the outline text above into the structured format. Return only the JSON, don't include any other text.
     使用全中文输出。
     """)
+    
+    final_prompt = files_xml + prompt
+    logger.debug(f"[get_outline_parsing_prompt] Final prompt:\n{final_prompt}")
+    return final_prompt
 
 
 def get_page_description_prompt(idea_prompt: str, outline: list, 
@@ -159,8 +170,8 @@ def get_page_description_prompt(idea_prompt: str, outline: list,
     """
     files_xml = _format_reference_files_xml(reference_files_content)
     
-    return dedent(f"""\
-    {files_xml}we are generating the text descriptionfor each ppt page.
+    prompt = dedent(f"""\
+    we are generating the text descriptionfor each ppt page.
     the original user request is: \n{idea_prompt}\n
     We already have the entire outline: \n{outline}\n{part_info}
     Now please generate the description for page {page_index}:
@@ -179,6 +190,10 @@ def get_page_description_prompt(idea_prompt: str, outline: list,
     
     使用全中文输出。
     """)
+    
+    final_prompt = files_xml + prompt
+    logger.debug(f"[get_page_description_prompt] Final prompt:\n{final_prompt}")
+    return final_prompt
 
 
 def get_image_generation_prompt(page_desc: str, outline_text: str, 
@@ -212,9 +227,9 @@ def get_image_generation_prompt(page_desc: str, outline_text: str,
     if extra_requirements and extra_requirements.strip():
         extra_req_text = f"\n\n额外要求（请务必遵循）：\n{extra_requirements}\n"
     
-    return dedent(f"""\
+    prompt = dedent(f"""\
     利用专业平面设计知识，根据参考图片的配色与风格生成一页设计风格相同的ppt页面，作为整个ppt的其中一页，页面描述如下:
-    {page_desc}（PPT页面实际渲染文字的标点符号、文字布局可以进一步设计美化，但其他文字内容需和“页面描述”完全一致）
+    {page_desc}（PPT页面实际渲染文字的标点符号、文字布局可以进一步设计美化，但其他文字内容需和"页面描述"完全一致）
     
     ---
     整个ppt的大纲为：
@@ -224,6 +239,9 @@ def get_image_generation_prompt(page_desc: str, outline_text: str,
     
     要求文字清晰锐利，画面为4K分辨率 16:9比例。画面配色与风格保持严格一致。ppt使用全中文。{material_images_note}{extra_req_text}
     """)
+    
+    logger.debug(f"[get_image_generation_prompt] Final prompt:\n{prompt}")
+    return prompt
 
 
 def get_image_edit_prompt(edit_instruction: str, original_description: str = None) -> str:
@@ -238,7 +256,7 @@ def get_image_edit_prompt(edit_instruction: str, original_description: str = Non
         格式化后的 prompt 字符串
     """
     if original_description:
-        return dedent(f"""\
+        prompt = dedent(f"""\
         该PPT页面的原始页面描述为：
         {original_description}
         
@@ -247,7 +265,10 @@ def get_image_edit_prompt(edit_instruction: str, original_description: str = Non
         要求维持原有的文字内容和设计风格，只按照指令进行修改。
         """)
     else:
-        return f"根据以下指令修改这张PPT页面：{edit_instruction}\n保持原有的内容结构和设计风格，只按照指令进行修改。"
+        prompt = f"根据以下指令修改这张PPT页面：{edit_instruction}\n保持原有的内容结构和设计风格，只按照指令进行修改。"
+    
+    logger.debug(f"[get_image_edit_prompt] Final prompt:\n{prompt}")
+    return prompt
 
 
 def get_description_to_outline_prompt(description_text: str, reference_files_content: Optional[List[Dict[str, str]]] = None) -> str:
@@ -263,8 +284,8 @@ def get_description_to_outline_prompt(description_text: str, reference_files_con
     """
     files_xml = _format_reference_files_xml(reference_files_content)
     
-    return dedent(f"""\
-    {files_xml}You are a helpful assistant that analyzes a user-provided PPT description text and extracts the outline structure from it.
+    prompt = dedent(f"""\
+    You are a helpful assistant that analyzes a user-provided PPT description text and extracts the outline structure from it.
     
     The user has provided the following description text:
     
@@ -309,6 +330,10 @@ def get_description_to_outline_prompt(description_text: str, reference_files_con
     Now extract the outline structure from the description text above. Return only the JSON, don't include any other text.
     使用全中文输出。
     """)
+    
+    final_prompt = files_xml + prompt
+    logger.debug(f"[get_description_to_outline_prompt] Final prompt:\n{final_prompt}")
+    return final_prompt
 
 
 def get_description_split_prompt(description_text: str, outline: List[Dict]) -> str:
@@ -325,7 +350,7 @@ def get_description_split_prompt(description_text: str, outline: List[Dict]) -> 
     import json
     outline_json = json.dumps(outline, ensure_ascii=False, indent=2)
     
-    return dedent(f"""\
+    prompt = dedent(f"""\
     You are a helpful assistant that splits a complete PPT description text into individual page descriptions.
     
     The user has provided a complete description text:
@@ -365,4 +390,7 @@ def get_description_split_prompt(description_text: str, outline: List[Dict]) -> 
     Now split the description text into individual page descriptions. Return only the JSON array, don't include any other text.
     使用全中文输出。
     """)
+    
+    logger.debug(f"[get_description_split_prompt] Final prompt:\n{prompt}")
+    return prompt
 
